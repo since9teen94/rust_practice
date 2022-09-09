@@ -33,7 +33,7 @@ async fn login_post(login_data: LoginUser) -> impl Responder {
         .validate()
         .map_err(|e| serde_json::to_string(&e).unwrap())
     {
-        return e.to_string();
+        return e;
     };
     let conn = &mut establish_connection();
     //We have made assurances that this is okay...
@@ -42,10 +42,6 @@ async fn login_post(login_data: LoginUser) -> impl Responder {
         .filter(email.eq(login.email))
         .first::<String>(conn)
         .unwrap();
-    if let Err(e) = compare_password(&login.password, &db_password) {
-        debug!("{e}");
-        return format!("{e}");
-    };
     debug!("{}", db_password);
     String::from("User logged in successfully")
 }

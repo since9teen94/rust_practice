@@ -1,4 +1,3 @@
-use log::debug;
 use std::borrow::Cow;
 
 use crate::establish_connection;
@@ -76,40 +75,37 @@ fn custom_email_login_validator(value: &str) -> Result<(), ValidationError> {
     Ok(())
 }
 
-pub fn compare_password(password_one: &str, password_two: &str) -> Result<(), ValidationError> {
-    if password_one != password_two {
-        let mut invalid_password = ValidationError::new("must_match");
-        invalid_password.message = Some(Cow::from("Invalid password"));
-        //invalid_password.code = Cow::from("must_match");
-        debug!("{invalid_password}");
-        return Err(invalid_password);
+pub fn compare_password(login: &UserLogin) -> Result<(), ValidationError> {
+    use super::schema::users::dsl::*;
+    let mut conn = establish_connection();
+    let db_password = users
+        .select(password)
+        .filter(email.eq(&login.email))
+        .first::<String>(&mut conn)
+        .unwrap();
+    if login.password != db_password {
+        let mut error = ValidationError::new("invalid");
+        error.add_param(Cow::from("value"), &login.password);
+        //not necessary
+        //error.add_param(Cow::from("field"), &String::from("password"));
+        //error.entry("password");
+        return Err(error);
     }
     Ok(())
 }
-
-fn password_login_validator(value: &str) -> Result<(), ValidationError> {
-    //use super::schema::users::dsl::*;
-    //let mut conn = establish_connection();
-    //let db_password = users
-    //.select(password)
-    //.filter((password.eq(value), email.equal()))
-    //.limit(2)
-    //.load::<String>(&mut conn)
-    //.unwrap();
-    //if email_unique.len() > 1 {
-    //return Err(ValidationError::new("invalid"));
-    //}
-    Ok(())
-}
-
-#[derive(Deserialize, Validate, Debug)]
+//defaults to true
+#[derive(Debug, Validate, Deserialize)]
+#[validate(schema(
+    function = "compare_password",
+    //skip_on_field_errors = false,
+    message = "Invalid password",
+))]
 pub struct UserLogin {
     #[validate(length(min = 1))]
     #[validate(email)]
     #[validate(custom(function = "custom_email_login_validator", message = "Invalid email"))]
     pub email: String,
     #[validate(length(min = 1))]
-    #[validate(custom(function = "password_login_validator"))]
     pub password: String,
 }
 
