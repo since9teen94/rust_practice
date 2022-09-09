@@ -74,38 +74,38 @@ fn custom_email_login_validator(value: &str) -> Result<(), ValidationError> {
     };
     Ok(())
 }
-
-pub fn compare_password(login: &UserLogin) -> Result<(), ValidationError> {
+fn custom_password_login_validator(value: &str, arg: &str) -> Result<(), ValidationError> {
     use super::schema::users::dsl::*;
     let mut conn = establish_connection();
     let db_password = users
         .select(password)
-        .filter(email.eq(&login.email))
-        .first::<String>(&mut conn)
-        .unwrap();
-    if login.password != db_password {
-        let mut error = ValidationError::new("invalid");
-        error.add_param(Cow::from("value"), &login.password);
-        //not necessary
-        //error.add_param(Cow::from("field"), &String::from("password"));
-        //error.entry("password");
-        return Err(error);
+        .filter(email.eq(arg))
+        .first::<String>(&mut conn);
+    if let Err(_) = db_password {
+        return Err(ValidationError::new("invalid"));
+    };
+    if value != db_password.unwrap() {
+        return Err(ValidationError::new("invalid"));
     }
     Ok(())
 }
-//defaults to true
+
 #[derive(Debug, Validate, Deserialize)]
-#[validate(schema(
-    function = "compare_password",
-    //skip_on_field_errors = false,
-    message = "Invalid password",
-))]
 pub struct UserLogin {
-    #[validate(length(min = 1))]
-    #[validate(email)]
-    #[validate(custom(function = "custom_email_login_validator", message = "Invalid email"))]
+    #[validate(
+        length(min = 1),
+        email,
+        custom(function = "custom_email_login_validator", message = "Invalid email",)
+    )]
     pub email: String,
-    #[validate(length(min = 1))]
+    #[validate(
+        length(min = 1),
+        custom(
+            function = "custom_password_login_validator",
+            message = "Invalid password",
+            arg = "&'v_a str"
+        )
+    )]
     pub password: String,
 }
 
@@ -115,49 +115,53 @@ pub struct UserRegistration {
     pub first_name: String,
     #[validate(length(min = 1, message = "Last name required"))]
     pub last_name: String,
-    #[validate(length(min = 1, message = "Email required"))]
-    #[validate(email)]
+    #[validate(email, length(min = 1, message = "Email required"))]
     pub email: String,
-    #[validate(length(min = 1, message = "Password required"))]
-    #[validate(length(min = 8, message = "Password must be at least 8 characters"))]
-    #[validate(must_match(other = "confirm_password", message = "Passwords must match"))]
-    #[validate(regex(
-        path = "ONE_UPPER_CASE_CHAR",
-        message = "Password must contain at least one uppercase character"
-    ))]
-    #[validate(regex(
-        path = "ONE_LOWER_CASE_CHAR",
-        message = "Password must contain at least one lowercase character"
-    ))]
-    #[validate(regex(
-        path = "ONE_NUMBER",
-        message = "Password must contain at least one number"
-    ))]
-    #[validate(regex(
-        path = "ONE_NON_ALPHA_CHAR",
-        message = "Password must contain at least one special character"
-    ))]
+    #[validate(
+        regex(
+            path = "ONE_UPPER_CASE_CHAR",
+            message = "Password must contain at least one uppercase character"
+        ),
+        regex(
+            path = "ONE_LOWER_CASE_CHAR",
+            message = "Password must contain at least one lowercase character"
+        ),
+        regex(
+            path = "ONE_NUMBER",
+            message = "Password must contain at least one number"
+        ),
+        regex(
+            path = "ONE_NON_ALPHA_CHAR",
+            message = "Password must contain at least one special character"
+        ),
+        regex(path = "NO_SPACES", message = "Password must not contain spaces"),
+        must_match(other = "confirm_password", message = "Passwords must match"),
+        length(min = 8, message = "Password must be at least 8 characters"),
+        length(min = 1, message = "Password required")
+    )]
     pub password: String,
-    #[validate(length(min = 1, message = "Password confirmation required"))]
-    #[validate(length(min = 8, message = "Password must be at least 8 characters"))]
-    #[validate(must_match(other = "password", message = "Passwords must match"))]
-    #[validate(regex(
-        path = "ONE_UPPER_CASE_CHAR",
-        message = "Password must contain at least one uppercase character"
-    ))]
-    #[validate(regex(
-        path = "ONE_LOWER_CASE_CHAR",
-        message = "Password must contain at least one lowercase character"
-    ))]
-    #[validate(regex(
-        path = "ONE_NUMBER",
-        message = "Password must contain at least one number"
-    ))]
-    #[validate(regex(
-        path = "ONE_NON_ALPHA_CHAR",
-        message = "Password must contain at least one special character"
-    ))]
-    #[validate(regex(path = "NO_SPACES", message = "Password must not contain spaces"))]
+    #[validate(
+        length(min = 1, message = "Password confirmation required"),
+        length(min = 8, message = "Password must be at least 8 characters"),
+        must_match(other = "password", message = "Passwords must match"),
+        regex(
+            path = "ONE_UPPER_CASE_CHAR",
+            message = "Password must contain at least one uppercase character"
+        ),
+        regex(
+            path = "ONE_LOWER_CASE_CHAR",
+            message = "Password must contain at least one lowercase character"
+        ),
+        regex(
+            path = "ONE_NUMBER",
+            message = "Password must contain at least one number"
+        ),
+        regex(
+            path = "ONE_NON_ALPHA_CHAR",
+            message = "Password must contain at least one special character"
+        ),
+        regex(path = "NO_SPACES", message = "Password must not contain spaces")
+    )]
     pub confirm_password: String,
 }
 

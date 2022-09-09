@@ -3,8 +3,9 @@ use actix_web::{
     Either, HttpResponse, Responder,
 };
 use diesel::{insert_into, prelude::*};
+#[allow(unused_imports)]
 use log::{debug, error, info, warn};
-use validator::Validate;
+use validator::{Validate, ValidateArgs};
 use web_app::establish_connection;
 use web_app::models::*;
 
@@ -24,25 +25,22 @@ async fn login_get() -> impl Responder {
 }
 
 async fn login_post(login_data: LoginUser) -> impl Responder {
-    use web_app::schema::users::dsl::*;
+    //TODO implement action post succesful login
+    //use web_app::schema::users::dsl::*;
 
     let login = login_data.into_inner();
-    debug!("Logging in the following user: {login:#?}");
-    //guard clause
     if let Err(e) = login
-        .validate()
+        .validate_args(&login.email)
         .map_err(|e| serde_json::to_string(&e).unwrap())
     {
         return e;
     };
-    let conn = &mut establish_connection();
-    //We have made assurances that this is okay...
-    let db_password = users
-        .select(password)
-        .filter(email.eq(login.email))
-        .first::<String>(conn)
-        .unwrap();
-    debug!("{}", db_password);
+    //let conn = &mut establish_connection();
+    //let db_password = users
+    //.select(password)
+    //.filter(email.eq(login.email))
+    //.first::<String>(conn)
+    //.unwrap();
     String::from("User logged in successfully")
 }
 
