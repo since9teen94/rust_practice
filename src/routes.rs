@@ -1,3 +1,8 @@
+//use argon2::{
+//password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
+//Argon2,
+//};
+
 use actix_web::{
     web::{self, Form, Json},
     Either, HttpResponse, Responder,
@@ -6,8 +11,7 @@ use diesel::{insert_into, prelude::*};
 #[allow(unused_imports)]
 use log::{debug, error, info, warn};
 use validator::{Validate, ValidateArgs};
-use web_app::establish_connection;
-use web_app::models::*;
+use web_app::{establish_connection, models::*, password_hasher};
 
 type RegisterNewUser = Either<Json<UserRegistration>, Form<UserRegistration>>;
 type LoginUser = Either<Json<UserLogin>, Form<UserLogin>>;
@@ -24,10 +28,22 @@ async fn login_get() -> impl Responder {
     "Hello login_get"
 }
 
-async fn login_post(login_data: LoginUser) -> impl Responder {
-    //TODO implement action post succesful login
-    //use web_app::schema::users::dsl::*;
+fn password_hash_checker(hashed_password: &str) -> Result<(), &'static str> {
+    use web_app::schema::users::dsl::*;
+    let mut conn = establish_connection();
+    let stored_hashed_password = users
+        .select(password)
+        .filter(email.eq(email))
+        .first::<String>(&mut conn)
+        .unwrap();
+    if hashed_password == &stored_hashed_password {
+        return Ok(());
+    } else {
+        return Err("Invalid Password");
+    }
+}
 
+async fn login_post(login_data: LoginUser) -> impl Responder {
     let login = login_data.into_inner();
     if let Err(e) = login
         .validate_args(&login.email)
@@ -35,12 +51,15 @@ async fn login_post(login_data: LoginUser) -> impl Responder {
     {
         return e;
     };
-    //let conn = &mut establish_connection();
-    //let db_password = users
-    //.select(password)
-    //.filter(email.eq(login.email))
-    //.first::<String>(conn)
-    //.unwrap();
+    let hashed_password = password_hasher(&login.password);
+    if let Err(_) = hashed_password {
+        println!("error error error");
+        return String::from("Password hash failed");
+    };
+    if let Err(_) = password_hash_checker(&hashed_password.unwrap()) {
+        println!("error at password hash");
+        return String::from("Password check failed");
+    }
     String::from("User logged in successfully")
 }
 

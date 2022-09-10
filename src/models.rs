@@ -1,8 +1,6 @@
-use std::borrow::Cow;
-
 use crate::establish_connection;
 
-use super::schema::users;
+use super::{password_hasher, schema::users};
 use diesel::prelude::*;
 use lazy_static::lazy_static;
 use regex::Regex;
@@ -74,6 +72,7 @@ fn custom_email_login_validator(value: &str) -> Result<(), ValidationError> {
     };
     Ok(())
 }
+
 fn custom_password_login_validator(value: &str, arg: &str) -> Result<(), ValidationError> {
     use super::schema::users::dsl::*;
     let mut conn = establish_connection();
@@ -84,7 +83,8 @@ fn custom_password_login_validator(value: &str, arg: &str) -> Result<(), Validat
     if let Err(_) = db_password {
         return Err(ValidationError::new("invalid"));
     };
-    if value != db_password.unwrap() {
+    let hashed_password = password_hasher(value).unwrap();
+    if hashed_password != db_password.unwrap() {
         return Err(ValidationError::new("invalid"));
     }
     Ok(())
@@ -173,10 +173,11 @@ pub fn register(registration: UserRegistration) -> NewUser {
         password,
         ..
     } = registration;
+    let hashed_password = password_hasher(&password).unwrap();
     NewUser {
         first_name,
         last_name,
         email,
-        password,
+        password: hashed_password,
     }
 }
