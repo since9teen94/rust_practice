@@ -121,56 +121,53 @@ pub fn register(registration: UserRegistration) -> NewUser {
     }
 }
 
-fn email_exists(value: &str) -> Result<(), ValidationError> {
+fn custom_login_email_validator(value: &str) -> Result<(), ValidationError> {
     use super::schema::users::dsl::*;
-    let mut conn = establish_connection();
-    let email_exists = users
-        .select(email)
-        .filter(email.eq(value))
-        .first::<String>(&mut conn);
-    if email_exists.is_err() {
-        return Err(ValidationError::new("invalid"));
-    }
-    Ok(())
-}
+    //TODO flesh out this function in regards to differences tha occur with login / registration
+    //fn email_exists(value: &str) -> Result<(), ValidationError> {
+    //let mut conn = establish_connection();
+    //let email_exists = users
+    //.select(email)
+    //.filter(email.eq(value))
+    //.first::<String>(&mut conn);
+    //if email_exists.is_err() {
+    //return Err(ValidationError::new("invalid"));
+    //}
+    //Ok(())
+    //}
 
-fn email_unique(value: &str) -> Result<(), ValidationError> {
-    use super::schema::users::dsl::*;
-    let mut conn = establish_connection();
-    let email_unique = users
-        .select(email)
-        .filter(email.eq(value))
-        .limit(2)
-        .load::<String>(&mut conn)
-        .unwrap();
-    if email_unique.len() > 1 {
-        return Err(ValidationError::new("invalid"));
+    fn email_unique_and_exists(value: &str) -> Result<(), ValidationError> {
+        let mut conn = establish_connection();
+        let email_unique = users
+            .select(email)
+            .filter(email.eq(value))
+            .limit(2)
+            .load::<String>(&mut conn);
+        if email_unique.is_err() {
+            return Err(ValidationError::new("invalid"));
+        };
+        if email_unique.unwrap().len() != 1 {
+            return Err(ValidationError::new("invalid"));
+        }
+        Ok(())
     }
-    Ok(())
-}
-
-fn custom_email_login_validator(value: &str) -> Result<(), ValidationError> {
-    if let Err(e) = email_exists(value) {
-        return Err(e);
-    };
-    if let Err(e) = email_unique(value) {
-        return Err(e);
-    };
+    //email_exists(value)?;
+    email_unique_and_exists(value)?;
     Ok(())
 }
 
 fn custom_login_validator(user_login: &UserLogin) -> Result<(), ValidationError> {
     let UserLogin { email, password } = user_login;
-    if custom_password_login_validator(password, email).is_err() {
+    if custom_login_email_validator(email).is_err() {
+        return Err(ValidationError::new("invalid"));
+    };
+    if custom_login_password_validator(password, email).is_err() {
         return Err(ValidationError::new("invalid"));
     };
     Ok(())
 }
 
-fn custom_password_login_validator(value: &str, arg: &str) -> Result<(), ValidationError> {
-    if custom_email_login_validator(arg).is_err() {
-        return Err(ValidationError::new("invalid"));
-    };
+fn custom_login_password_validator(value: &str, arg: &str) -> Result<(), ValidationError> {
     use super::schema::users::dsl::*;
     let mut conn = establish_connection();
     let db_password = users

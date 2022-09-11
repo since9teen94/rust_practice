@@ -3,6 +3,7 @@ use dotenvy::dotenv;
 use std::env;
 mod routes;
 
+///Be sure to set DATABASE_URL, PORT, and RUST_LOG .env variables to run the binary
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     dotenv().ok();

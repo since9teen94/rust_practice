@@ -15,6 +15,7 @@ pub async fn not_allowed() -> impl Responder {
     HttpResponse::MethodNotAllowed()
 }
 
+//TODO add static page / redirect with user form -> login / register
 async fn index_get() -> impl Responder {
     "hello world!"
 }
@@ -39,13 +40,10 @@ async fn login_post(login_data: LoginUser) -> impl Responder {
         .first::<String>(&mut conn);
 
     if hashed_password.is_err() {
-        error!("error getting password hash from database");
-        return String::from("Password hash failed");
+        return String::from("Invalid Credentials");
     };
-
     if password_hash_checker(&login.password, &hashed_password.unwrap()).is_err() {
-        error!("error checking password against password hash from database");
-        return String::from("Password check failed");
+        return String::from("Invalid Credentials");
     }
     String::from("User logged in successfully")
 }
@@ -58,7 +56,6 @@ async fn register_post(registration_data: RegisterNewUser) -> impl Responder {
     use web_app::schema::users::dsl::*;
 
     let registration = registration_data.into_inner();
-    debug!("Registering the following user: {registration:?}");
     match registration
         .validate()
         .map_err(|e| serde_json::to_string(&e).unwrap())
@@ -67,17 +64,14 @@ async fn register_post(registration_data: RegisterNewUser) -> impl Responder {
             let conn = &mut establish_connection();
             let new_user = register(registration);
 
-            insert_into(users)
-                .values(new_user)
-                .execute(conn)
-                .expect("Error registering new user: ");
+            if let Err(e) = insert_into(users).values(new_user).execute(conn) {
+                return format!("Error registering user: {e}");
+            };
 
-            info!("User successfully registered");
-            String::from("User successfully registered")
+            return String::from("User successfully registered");
         }
         Err(e) => {
-            error!("Error(s) encountered registering user: {e}");
-            e
+            return format!("Error(s) encountered with user registration data: {e}");
         }
     }
 }
