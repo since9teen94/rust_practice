@@ -1,8 +1,3 @@
-//use argon2::{
-//password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
-//Argon2,
-//};
-
 use actix_web::{
     web::{self, Form, Json},
     Either, HttpResponse, Responder,
@@ -10,8 +5,8 @@ use actix_web::{
 use diesel::{insert_into, prelude::*};
 #[allow(unused_imports)]
 use log::{debug, error, info, warn};
-use validator::{Validate, ValidateArgs};
-use web_app::{establish_connection, models::*, password_hasher};
+use validator::Validate;
+use web_app::{establish_connection, models::*, password_hash_checker};
 
 type RegisterNewUser = Either<Json<UserRegistration>, Form<UserRegistration>>;
 type LoginUser = Either<Json<UserLogin>, Form<UserLogin>>;
@@ -28,36 +23,28 @@ async fn login_get() -> impl Responder {
     "Hello login_get"
 }
 
-fn password_hash_checker(hashed_password: &str) -> Result<(), &'static str> {
-    use web_app::schema::users::dsl::*;
-    let mut conn = establish_connection();
-    let stored_hashed_password = users
-        .select(password)
-        .filter(email.eq(email))
-        .first::<String>(&mut conn)
-        .unwrap();
-    if hashed_password == &stored_hashed_password {
-        return Ok(());
-    } else {
-        return Err("Invalid Password");
-    }
-}
-
 async fn login_post(login_data: LoginUser) -> impl Responder {
     let login = login_data.into_inner();
     if let Err(e) = login
-        .validate_args(&login.email)
+        .validate()
         .map_err(|e| serde_json::to_string(&e).unwrap())
     {
         return e;
     };
-    let hashed_password = password_hasher(&login.password);
-    if let Err(_) = hashed_password {
-        println!("error error error");
+    use web_app::schema::users::dsl::*;
+    let mut conn = establish_connection();
+    let hashed_password = users
+        .select(password)
+        .filter(email.eq(login.email))
+        .first::<String>(&mut conn);
+
+    if hashed_password.is_err() {
+        error!("error getting password hash from database");
         return String::from("Password hash failed");
     };
-    if let Err(_) = password_hash_checker(&hashed_password.unwrap()) {
-        println!("error at password hash");
+
+    if password_hash_checker(&login.password, &hashed_password.unwrap()).is_err() {
+        error!("error checking password against password hash from database");
         return String::from("Password check failed");
     }
     String::from("User logged in successfully")
@@ -90,7 +77,7 @@ async fn register_post(registration_data: RegisterNewUser) -> impl Responder {
         }
         Err(e) => {
             error!("Error(s) encountered registering user: {e}");
-            e.to_string()
+            e
         }
     }
 }
