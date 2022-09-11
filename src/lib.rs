@@ -1,13 +1,26 @@
 pub mod models;
 use argon2::{
-    password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
+    password_hash::{rand_core::OsRng, PasswordHasher, SaltString},
     Argon2,
 };
+use std::borrow::Cow;
 pub mod schema;
-use diesel::pg::PgConnection;
-use diesel::prelude::*;
+use actix_web::{error, HttpResponse, Responder};
+use diesel::{insert_into, pg::PgConnection, prelude::*};
 use dotenvy::dotenv;
+use lazy_static::lazy_static;
+use models::{NewUser, UserRegistration};
 use std::env;
+use tera::{Context, Tera};
+use validator::ValidationError;
+
+lazy_static! {
+    pub static ref TEMPLATES: Tera = Tera::new("templates/*").unwrap();
+}
+
+pub async fn not_allowed() -> impl Responder {
+    HttpResponse::MethodNotAllowed()
+}
 
 pub fn establish_connection() -> PgConnection {
     dotenv().ok();
@@ -17,7 +30,32 @@ pub fn establish_connection() -> PgConnection {
         .unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
 }
 
-pub fn password_hasher(password_str: &str) -> Result<String, argon2::password_hash::Error> {
+pub fn render(file: &str, context: Context) -> Result<HttpResponse, actix_web::Error> {
+    match TEMPLATES.render(file, &context) {
+        Ok(t) => Ok(HttpResponse::Ok().body(t)),
+        Err(e) => Err(error::ErrorInternalServerError(e)),
+    }
+}
+
+pub fn register(user: UserRegistration) -> Result<(), ValidationError> {
+    let UserRegistration {
+        first_name,
+        last_name,
+        email,
+        password,
+        confirm_password: _,
+    } = user;
+    let hashed_password = password_hasher(&password).unwrap();
+    let new_user = NewUser {
+        first_name,
+        last_name,
+        email,
+        password: hashed_password,
+    };
+    create_user(new_user)
+}
+
+fn password_hasher(password_str: &str) -> Result<String, argon2::password_hash::Error> {
     let password = password_str.as_bytes();
     let salt = SaltString::generate(&mut OsRng);
     let argon2 = Argon2::default();
@@ -25,10 +63,13 @@ pub fn password_hasher(password_str: &str) -> Result<String, argon2::password_ha
     Ok(password_hash)
 }
 
-pub fn password_hash_checker(
-    password: &str,
-    password_hash: &str,
-) -> Result<(), argon2::password_hash::Error> {
-    let parsed_hash = PasswordHash::new(password_hash)?;
-    Argon2::default().verify_password(password.as_bytes(), &parsed_hash)
+fn create_user(new_user: NewUser) -> Result<(), ValidationError> {
+    use schema::users::dsl::*;
+    let conn = &mut establish_connection();
+    if insert_into(users).values(new_user).execute(conn).is_err() {
+        let mut registration_error = ValidationError::new("registration_error");
+        registration_error.message = Some(Cow::Borrowed("An error occured during registration"));
+        return Err(registration_error);
+    };
+    Ok(())
 }

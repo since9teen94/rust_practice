@@ -1,27 +1,22 @@
 use actix_web::{
     web::{self, Form, Json},
-    Either, HttpResponse, Responder,
+    Either, Responder,
 };
-use diesel::{insert_into, prelude::*};
-#[allow(unused_imports)]
-use log::{debug, error, info, warn};
+use actix_web_lab::web::Redirect;
+use tera::Context;
 use validator::Validate;
-use web_app::{establish_connection, models::*, password_hash_checker};
+use web_app::{
+    models::{UserLogin, UserRegistration},
+    not_allowed, register, render,
+};
 
 type RegisterNewUser = Either<Json<UserRegistration>, Form<UserRegistration>>;
 type LoginUser = Either<Json<UserLogin>, Form<UserLogin>>;
 
-pub async fn not_allowed() -> impl Responder {
-    HttpResponse::MethodNotAllowed()
-}
-
-//TODO add static page / redirect with user form -> login / register
-async fn index_get() -> impl Responder {
-    "hello world!"
-}
-
 async fn login_get() -> impl Responder {
-    "Hello login_get"
+    let mut context = Context::new();
+    context.insert("title", "Login");
+    render("log_reg.html", context)
 }
 
 async fn login_post(login_data: LoginUser) -> impl Responder {
@@ -32,54 +27,34 @@ async fn login_post(login_data: LoginUser) -> impl Responder {
     {
         return e;
     };
-    use web_app::schema::users::dsl::*;
-    let mut conn = establish_connection();
-    let hashed_password = users
-        .select(password)
-        .filter(email.eq(login.email))
-        .first::<String>(&mut conn);
-
-    if hashed_password.is_err() {
-        return String::from("Invalid Credentials");
-    };
-    if password_hash_checker(&login.password, &hashed_password.unwrap()).is_err() {
-        return String::from("Invalid Credentials");
-    }
     String::from("User logged in successfully")
 }
 
 async fn register_get() -> impl Responder {
-    "Hello register_get"
+    let mut context = Context::new();
+    context.insert("title", "Register");
+    render("log_reg.html", context)
 }
 
 async fn register_post(registration_data: RegisterNewUser) -> impl Responder {
-    use web_app::schema::users::dsl::*;
-
-    let registration = registration_data.into_inner();
-    match registration
+    let registration_values = registration_data.into_inner();
+    if let Err(e) = registration_values
         .validate()
         .map_err(|e| serde_json::to_string(&e).unwrap())
     {
-        Ok(_) => {
-            let conn = &mut establish_connection();
-            let new_user = register(registration);
-
-            if let Err(e) = insert_into(users).values(new_user).execute(conn) {
-                return format!("Error registering user: {e}");
-            };
-
-            return String::from("User successfully registered");
-        }
-        Err(e) => {
-            return format!("Error(s) encountered with user registration data: {e}");
-        }
-    }
+        return e;
+    };
+    //TODO return as server errs
+    if let Err(e) = register(registration_values) {
+        return serde_json::to_string(&e).unwrap();
+    };
+    String::from("User successfully registered")
 }
 
 pub fn index(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::resource("/")
-            .route(web::get().to(index_get))
+            .route(web::get().to(|| async { Redirect::new("/", "/login") }))
             .route(web::head().to(not_allowed)),
     )
     .service(

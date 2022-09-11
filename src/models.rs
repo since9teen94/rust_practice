@@ -1,11 +1,22 @@
-use crate::{establish_connection, password_hash_checker};
-
-use super::{password_hasher, schema::users};
+use crate::establish_connection;
+use crate::schema::users;
+use argon2::{
+    password_hash::{PasswordHash, PasswordVerifier},
+    Argon2,
+};
 use diesel::prelude::*;
 use lazy_static::lazy_static;
 use regex::Regex;
 use serde::Deserialize;
 use validator::{Validate, ValidationError};
+
+lazy_static! {
+    static ref ONE_UPPER_CASE_CHAR: Regex = Regex::new(r"[A-Z]+").unwrap();
+    static ref ONE_LOWER_CASE_CHAR: Regex = Regex::new(r"[a-z]+").unwrap();
+    static ref ONE_NUMBER: Regex = Regex::new(r"\d+").unwrap();
+    static ref ONE_NON_ALPHA_CHAR: Regex = Regex::new(r"\W+").unwrap();
+    static ref NO_SPACES: Regex = Regex::new(r"^[^ ]+$").unwrap();
+}
 
 #[derive(Queryable)]
 pub struct User {
@@ -46,7 +57,11 @@ pub struct UserRegistration {
     pub first_name: String,
     #[validate(length(min = 1, message = "Last name required"))]
     pub last_name: String,
-    #[validate(email, length(min = 1, message = "Email required"))]
+    #[validate(
+        custom(function = "custom_registration_email_validator",),
+        email,
+        length(min = 1, message = "Email required")
+    )]
     pub email: String,
     #[validate(
         regex(
@@ -96,72 +111,13 @@ pub struct UserRegistration {
     pub confirm_password: String,
 }
 
-lazy_static! {
-    static ref ONE_UPPER_CASE_CHAR: Regex = Regex::new(r"[A-Z]+").unwrap();
-    static ref ONE_LOWER_CASE_CHAR: Regex = Regex::new(r"[a-z]+").unwrap();
-    static ref ONE_NUMBER: Regex = Regex::new(r"\d+").unwrap();
-    static ref ONE_NON_ALPHA_CHAR: Regex = Regex::new(r"\W+").unwrap();
-    static ref NO_SPACES: Regex = Regex::new(r"^[^ ]+$").unwrap();
-}
-
-pub fn register(registration: UserRegistration) -> NewUser {
-    let UserRegistration {
-        first_name,
-        last_name,
-        email,
-        password,
-        ..
-    } = registration;
-    let hashed_password = password_hasher(&password).unwrap();
-    NewUser {
-        first_name,
-        last_name,
-        email,
-        password: hashed_password,
-    }
-}
-
-fn custom_login_email_validator(value: &str) -> Result<(), ValidationError> {
-    use super::schema::users::dsl::*;
-    //TODO flesh out this function in regards to differences tha occur with login / registration
-    //fn email_exists(value: &str) -> Result<(), ValidationError> {
-    //let mut conn = establish_connection();
-    //let email_exists = users
-    //.select(email)
-    //.filter(email.eq(value))
-    //.first::<String>(&mut conn);
-    //if email_exists.is_err() {
-    //return Err(ValidationError::new("invalid"));
-    //}
-    //Ok(())
-    //}
-
-    fn email_unique_and_exists(value: &str) -> Result<(), ValidationError> {
-        let mut conn = establish_connection();
-        let email_unique = users
-            .select(email)
-            .filter(email.eq(value))
-            .limit(2)
-            .load::<String>(&mut conn);
-        if email_unique.is_err() {
-            return Err(ValidationError::new("invalid"));
-        };
-        if email_unique.unwrap().len() != 1 {
-            return Err(ValidationError::new("invalid"));
-        }
-        Ok(())
-    }
-    //email_exists(value)?;
-    email_unique_and_exists(value)?;
-    Ok(())
+fn custom_registration_email_validator(value: &str) -> Result<(), ValidationError> {
+    email_count(value, 0)
 }
 
 fn custom_login_validator(user_login: &UserLogin) -> Result<(), ValidationError> {
     let UserLogin { email, password } = user_login;
-    if custom_login_email_validator(email).is_err() {
-        return Err(ValidationError::new("invalid"));
-    };
-    if custom_login_password_validator(password, email).is_err() {
+    if email_count(email, 1).is_err() || custom_login_password_validator(password, email).is_err() {
         return Err(ValidationError::new("invalid"));
     };
     Ok(())
@@ -182,4 +138,26 @@ fn custom_login_password_validator(value: &str, arg: &str) -> Result<(), Validat
         return Err(ValidationError::new("invalid"));
     };
     Ok(())
+}
+
+fn email_count(value: &str, count: usize) -> Result<(), ValidationError> {
+    use super::schema::users::dsl::*;
+    let mut conn = establish_connection();
+    let email_unique = users
+        .select(email)
+        .filter(email.eq(value))
+        .limit(2)
+        .load::<String>(&mut conn);
+    if email_unique.is_err() || email_unique.unwrap().len() != count {
+        return Err(ValidationError::new("email"));
+    };
+    Ok(())
+}
+
+fn password_hash_checker(
+    password: &str,
+    password_hash: &str,
+) -> Result<(), argon2::password_hash::Error> {
+    let parsed_hash = PasswordHash::new(password_hash)?;
+    Argon2::default().verify_password(password.as_bytes(), &parsed_hash)
 }
