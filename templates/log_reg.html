@@ -1,7 +1,13 @@
 {% extends "index.html" %}
 {% block title %}
-	{{title}}
+{{title}}
 {% endblock %}
 {% block body %}
-	<p>Hello!</p>
+	<form action="{{action}}" method="post">
+		{% for field in fields %}
+		<label for="{{field.id}}">{{field.text}}</label>
+		<input type="{{field.field_type}}" id="{{field.id}}" name="{{field.id}}">
+		{% endfor %}
+		<input type="submit" value="{{title}}">
+	</form>
 {% endblock %}

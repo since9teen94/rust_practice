@@ -6,7 +6,7 @@ use actix_web_lab::web::Redirect;
 use tera::Context;
 use validator::Validate;
 use web_app::{
-    models::{UserLogin, UserRegistration},
+    models::{LogRegForm, LogRegFormField, UserLogin, UserRegistration},
     not_allowed, register, render,
 };
 
@@ -14,9 +14,15 @@ type RegisterNewUser = Either<Json<UserRegistration>, Form<UserRegistration>>;
 type LoginUser = Either<Json<UserLogin>, Form<UserLogin>>;
 
 async fn login_get() -> impl Responder {
-    let mut context = Context::new();
-    context.insert("title", "Login");
-    render("log_reg.html", context)
+    let login_form = LogRegForm::new(
+        "Log In",
+        "/login",
+        vec![
+            LogRegFormField::new("email", "Email", "email"),
+            LogRegFormField::new("password", "Password", "password"),
+        ],
+    );
+    render("log_reg.html", Context::from_serialize(login_form).unwrap())
 }
 
 async fn login_post(login_data: LoginUser) -> impl Responder {
@@ -31,9 +37,18 @@ async fn login_post(login_data: LoginUser) -> impl Responder {
 }
 
 async fn register_get() -> impl Responder {
-    let mut context = Context::new();
-    context.insert("title", "Register");
-    render("log_reg.html", context)
+    let login_form = LogRegForm::new(
+        "Register",
+        "/register",
+        vec![
+            LogRegFormField::new("first_name", "First Name", "first_name"),
+            LogRegFormField::new("last_name", "Last Name", "last_name"),
+            LogRegFormField::new("email", "Email", "email"),
+            LogRegFormField::new("password", "Password", "password"),
+            LogRegFormField::new("confirm_password", "Confirm Password", "confirm_password"),
+        ],
+    );
+    render("log_reg.html", Context::from_serialize(login_form).unwrap())
 }
 
 async fn register_post(registration_data: RegisterNewUser) -> impl Responder {
@@ -48,6 +63,7 @@ async fn register_post(registration_data: RegisterNewUser) -> impl Responder {
     if let Err(e) = register(registration_values) {
         return serde_json::to_string(&e).unwrap();
     };
+    //TODO return as HttpResponses
     String::from("User successfully registered")
 }
 

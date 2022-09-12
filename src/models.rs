@@ -8,6 +8,7 @@ use diesel::prelude::*;
 use lazy_static::lazy_static;
 use regex::Regex;
 use serde::Deserialize;
+use serde::Serialize;
 use validator::{Validate, ValidationError};
 
 lazy_static! {
@@ -16,6 +17,40 @@ lazy_static! {
     static ref ONE_NUMBER: Regex = Regex::new(r"\d+").unwrap();
     static ref ONE_NON_ALPHA_CHAR: Regex = Regex::new(r"\W+").unwrap();
     static ref NO_SPACES: Regex = Regex::new(r"^[^ ]+$").unwrap();
+}
+
+#[derive(Serialize)]
+pub struct LogRegFormField {
+    id: String,
+    text: String,
+    field_type: String,
+}
+
+impl LogRegFormField {
+    pub fn new(id: &str, text: &str, field_type: &str) -> LogRegFormField {
+        LogRegFormField {
+            id: String::from(id),
+            text: String::from(text),
+            field_type: String::from(field_type),
+        }
+    }
+}
+
+#[derive(Serialize)]
+pub struct LogRegForm {
+    title: String,
+    action: String,
+    fields: Vec<LogRegFormField>,
+}
+
+impl LogRegForm {
+    pub fn new(title: &str, action: &str, fields: Vec<LogRegFormField>) -> LogRegForm {
+        LogRegForm {
+            title: String::from(title),
+            action: String::from(action),
+            fields,
+        }
+    }
 }
 
 #[derive(Queryable)]
