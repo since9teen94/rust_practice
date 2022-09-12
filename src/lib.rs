@@ -7,7 +7,7 @@ use argon2::{
 use serde::Serialize;
 use std::borrow::Cow;
 pub mod schema;
-use actix_web::{error, http::StatusCode, HttpResponse, Responder};
+use actix_web::{http::StatusCode, HttpResponse, Responder};
 use diesel::{insert_into, pg::PgConnection, prelude::*};
 use dotenvy::dotenv;
 use lazy_static::lazy_static;
@@ -30,11 +30,16 @@ pub fn establish_connection() -> PgConnection {
         .unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
 }
 
-pub fn render(file: &str, context: Context) -> Result<HttpResponse, actix_web::Error> {
-    match TEMPLATES.render(file, &context) {
-        Ok(t) => Ok(HttpResponse::Ok().body(t)),
-        Err(e) => Err(error::ErrorInternalServerError(e)),
-    }
+//pub fn render(file: &str, context: Context) -> Result<HttpResponse, actix_web::Error> {
+//match TEMPLATES.render(file, &context) {
+//Ok(t) => Ok(HttpResponse::Ok().body(t)),
+//Err(e) => Err(error::ErrorInternalServerError(e)),
+//}
+//}
+
+pub fn render(file: &str, context: Context) -> HttpResponse {
+    let template = TEMPLATES.render(file, &context).unwrap();
+    HttpResponse::Ok().body(template)
 }
 
 pub fn register(user: UserRegistration) -> Result<(), ValidationError> {

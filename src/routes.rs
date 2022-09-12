@@ -1,16 +1,18 @@
+use actix_session::Session;
 use actix_web::{
     web::{self, Form, Json},
     Either, Responder,
 };
 use actix_web_lab::web::Redirect;
 use tera::Context;
+use uuid::Uuid;
 use validator::Validate;
 use web_app::{
     bad_req,
     forms::LogRegForm,
     good_req,
     models::{UserLogin, UserRegistration},
-    not_allowed, not_found, register, render, HTML, JSON,
+    not_allowed, register, render, HTML, JSON,
 };
 
 type RegisterNewUser = Either<Json<UserRegistration>, Form<UserRegistration>>;
@@ -22,12 +24,18 @@ async fn login_get() -> impl Responder {
     render("log_reg.html", context)
 }
 
-async fn login_post(login_data: LoginUser) -> impl Responder {
+async fn login_post(login_data: LoginUser, session: Session) -> impl Responder {
     let login = login_data.into_inner();
     if let Err(e) = login.validate() {
         return bad_req(400, *JSON, e);
     };
+    let id = Uuid::new_v4();
+    //println!("{id}");
+    session.insert("uuid", id.to_string()).unwrap();
+    println!("this is the session data: {:?}", session.entries());
     good_req(200, *HTML, "User logged in successfully")
+    //TODO flesh out cookies / auth
+    //TODO redirect to home page
 }
 
 async fn register_get() -> impl Responder {
@@ -45,6 +53,7 @@ async fn register_post(registration_data: RegisterNewUser) -> impl Responder {
         return bad_req(400, *JSON, e);
     }
     good_req(201, *HTML, "User successfully registered")
+    //TODO redirect to home page
 }
 
 pub fn index(cfg: &mut web::ServiceConfig) {
@@ -64,6 +73,5 @@ pub fn index(cfg: &mut web::ServiceConfig) {
             .route(web::get().to(register_get))
             .route(web::post().to(register_post))
             .route(web::to(not_allowed)),
-    )
-    .default_service(web::to(not_found));
+    );
 }
