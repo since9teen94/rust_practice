@@ -3,6 +3,7 @@ use argon2::{
     password_hash::{rand_core::OsRng, PasswordHasher, SaltString},
     Argon2,
 };
+use serde::Serialize;
 use std::borrow::Cow;
 pub mod schema;
 use actix_web::{error, http::StatusCode, HttpResponse, Responder};
@@ -15,19 +16,9 @@ use tera::{Context, Tera};
 use validator::ValidationError;
 
 lazy_static! {
-    pub static ref TEMPLATES: Tera = Tera::new("templates/*").unwrap();
-}
-
-pub async fn not_allowed() -> impl Responder {
-    HttpResponse::build(StatusCode::METHOD_NOT_ALLOWED)
-        .content_type("text/html; charset=utf-8")
-        .body("<h1>405 Not Allowed</h1>")
-}
-
-pub async fn not_found() -> impl Responder {
-    HttpResponse::build(StatusCode::NOT_FOUND)
-        .content_type("text/html; charset=utf-8")
-        .body("<h1>404</h1><p>Page Not Found</p>")
+    static ref TEMPLATES: Tera = Tera::new("templates/*").unwrap();
+    pub static ref JSON: &'static str = "application/json";
+    pub static ref HTML: &'static str = "text/html";
 }
 
 pub fn establish_connection() -> PgConnection {
@@ -80,4 +71,30 @@ fn create_user(new_user: NewUser) -> Result<(), ValidationError> {
         return Err(registration_error);
     };
     Ok(())
+}
+
+pub fn bad_req<T: Serialize>(code: u16, content_type: &'static str, error: T) -> HttpResponse {
+    let content_type = format!("{content_type}; charset=utf-8");
+    HttpResponse::build(StatusCode::from_u16(code).unwrap())
+        .content_type(content_type)
+        .body(serde_json::to_string(&error).unwrap())
+}
+
+pub fn good_req(code: u16, content_type: &'static str, message: &'static str) -> HttpResponse {
+    let content_type = format!("{content_type}; charset=utf-8");
+    HttpResponse::build(StatusCode::from_u16(code).unwrap())
+        .content_type(content_type)
+        .body(message)
+}
+
+pub async fn not_allowed() -> impl Responder {
+    HttpResponse::build(StatusCode::METHOD_NOT_ALLOWED)
+        .content_type("text/html; charset=utf-8")
+        .body("<h1>405 Not Allowed</h1>")
+}
+
+pub async fn not_found() -> impl Responder {
+    HttpResponse::build(StatusCode::NOT_FOUND)
+        .content_type("text/html; charset=utf-8")
+        .body("<h1>404</h1><p>Page Not Found</p>")
 }
