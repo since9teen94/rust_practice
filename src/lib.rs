@@ -1,3 +1,4 @@
+pub mod forms;
 pub mod models;
 use argon2::{
     password_hash::{rand_core::OsRng, PasswordHasher, SaltString},

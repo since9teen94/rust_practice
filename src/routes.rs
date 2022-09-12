@@ -6,8 +6,10 @@ use actix_web_lab::web::Redirect;
 use tera::Context;
 use validator::Validate;
 use web_app::{
-    bad_req, good_req,
-    models::{LogRegForm, UserLogin, UserRegistration},
+    bad_req,
+    forms::LogRegForm,
+    good_req,
+    models::{UserLogin, UserRegistration},
     not_allowed, not_found, register, render, HTML, JSON,
 };
 

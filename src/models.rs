@@ -7,8 +7,7 @@ use argon2::{
 use diesel::prelude::*;
 use lazy_static::lazy_static;
 use regex::Regex;
-use serde::Deserialize;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use validator::{Validate, ValidationError};
 
 lazy_static! {
@@ -52,7 +51,7 @@ pub struct UserLogin {
     pub password: Option<String>,
 }
 
-#[derive(Deserialize, Validate, Debug)]
+#[derive(Serialize, Deserialize, Validate, Debug)]
 pub struct UserRegistration {
     #[validate(required)]
     pub first_name: Option<String>,
@@ -86,6 +85,7 @@ pub struct UserRegistration {
         length(min = 8, message = "Password must be at least 8 characters"),
         required
     )]
+    #[serde(rename = "password")]
     pub _password: Option<String>,
     #[validate(
         length(min = 8, message = "Password must be at least 8 characters"),
@@ -109,6 +109,7 @@ pub struct UserRegistration {
         regex(path = "NO_SPACES", message = "Password must not contain spaces"),
         required
     )]
+    #[serde(rename = "confirm_password")]
     pub _confirm_password: Option<String>,
 }
 
@@ -163,57 +164,4 @@ fn password_hash_checker(
 ) -> Result<(), argon2::password_hash::Error> {
     let parsed_hash = PasswordHash::new(password_hash)?;
     Argon2::default().verify_password(password.as_bytes(), &parsed_hash)
-}
-
-#[derive(Serialize)]
-pub struct LogRegForm {
-    title: String,
-    action: String,
-    fields: Vec<LogRegFormField>,
-}
-
-impl LogRegForm {
-    pub fn new(title: &str, action: &str) -> LogRegForm {
-        let mut form_fields = vec![
-            LogRegFormField::new("email", "Email", "email"),
-            LogRegFormField::new("password", "Password", "password"),
-        ];
-        if title == "Register" {
-            form_fields.insert(
-                0,
-                LogRegFormField::new("first_name", "First Name", "first_name"),
-            );
-            form_fields.insert(
-                1,
-                LogRegFormField::new("last_name", "Last Name", "last_name"),
-            );
-            form_fields.push(LogRegFormField::new(
-                "confirm_password",
-                "Confirm Password",
-                "confirm_password",
-            ));
-        }
-        LogRegForm {
-            title: String::from(title),
-            action: String::from(action),
-            fields: form_fields,
-        }
-    }
-}
-
-#[derive(Serialize)]
-pub struct LogRegFormField {
-    id: String,
-    text: String,
-    field_type: String,
-}
-
-impl LogRegFormField {
-    pub fn new(id: &str, text: &str, field_type: &str) -> LogRegFormField {
-        LogRegFormField {
-            id: String::from(id),
-            text: String::from(text),
-            field_type: String::from(field_type),
-        }
-    }
 }
