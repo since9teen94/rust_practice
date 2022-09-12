@@ -11,5 +11,5 @@
 =======
 /target
 .env
-.replit
-replit.nix
+#.replit
+#replit.nix
