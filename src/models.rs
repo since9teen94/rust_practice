@@ -19,40 +19,6 @@ lazy_static! {
     static ref NO_SPACES: Regex = Regex::new(r"^[^ ]+$").unwrap();
 }
 
-#[derive(Serialize)]
-pub struct LogRegFormField {
-    id: String,
-    text: String,
-    field_type: String,
-}
-
-impl LogRegFormField {
-    pub fn new(id: &str, text: &str, field_type: &str) -> LogRegFormField {
-        LogRegFormField {
-            id: String::from(id),
-            text: String::from(text),
-            field_type: String::from(field_type),
-        }
-    }
-}
-
-#[derive(Serialize)]
-pub struct LogRegForm {
-    title: String,
-    action: String,
-    fields: Vec<LogRegFormField>,
-}
-
-impl LogRegForm {
-    pub fn new(title: &str, action: &str, fields: Vec<LogRegFormField>) -> LogRegForm {
-        LogRegForm {
-            title: String::from(title),
-            action: String::from(action),
-            fields,
-        }
-    }
-}
-
 #[derive(Queryable)]
 pub struct User {
     pub id: i32,
@@ -195,4 +161,70 @@ fn password_hash_checker(
 ) -> Result<(), argon2::password_hash::Error> {
     let parsed_hash = PasswordHash::new(password_hash)?;
     Argon2::default().verify_password(password.as_bytes(), &parsed_hash)
+}
+
+#[derive(Serialize)]
+pub struct LogRegForm {
+    title: String,
+    action: String,
+    fields: Vec<LogRegFormField>,
+}
+
+impl LogRegForm {
+    pub fn new(title: &str, action: &str) -> LogRegForm {
+        let login_fields = vec![
+            //LogRegFormField::new("first_name", "First Name", "first_name"),
+            //LogRegFormField::new("last_name", "Last Name", "last_name"),
+            LogRegFormField::new("email", "Email", "email"),
+            LogRegFormField::new("password", "Password", "password"),
+            //LogRegFormField::new("confirm_password", "Confirm Password", "confirm_password"),
+        ];
+        let register_fields = &login_fields; //.push(LogRegFormField::new( "first_name", "First Name", "first_name",));
+        register_fields.push(LogRegFormField::new(
+            "first_name",
+            "First Name",
+            "first_name",
+        ));
+        //vec![
+        //LogRegFormField::new("first_name", "First Name", "first_name"),
+        //LogRegFormField::new("last_name", "Last Name", "last_name"),
+        //LogRegFormField::new("email", "Email", "email"),
+        //LogRegFormField::new("password", "Password", "password"),
+        //LogRegFormField::new("confirm_password", "Confirm Password", "confirm_password"),
+        //]
+        let fields = match title {
+            "Log In" => login_fields,
+            "Register" => vec![
+                LogRegFormField::new("first_name", "First Name", "first_name"),
+                LogRegFormField::new("last_name", "Last Name", "last_name"),
+                LogRegFormField::new("email", "Email", "email"),
+                LogRegFormField::new("password", "Password", "password"),
+                LogRegFormField::new("confirm_password", "Confirm Password", "confirm_password"),
+            ],
+            _ => vec![],
+        };
+
+        LogRegForm {
+            title: String::from(title),
+            action: String::from(action),
+            fields,
+        }
+    }
+}
+
+#[derive(Serialize)]
+pub struct LogRegFormField {
+    id: String,
+    text: String,
+    field_type: String,
+}
+
+impl LogRegFormField {
+    pub fn new(id: &str, text: &str, field_type: &str) -> LogRegFormField {
+        LogRegFormField {
+            id: String::from(id),
+            text: String::from(text),
+            field_type: String::from(field_type),
+        }
+    }
 }

@@ -3,29 +3,24 @@ use actix_web::{
     Either, Responder,
 };
 use actix_web_lab::web::Redirect;
+use log::debug;
 use tera::Context;
 use validator::Validate;
 use web_app::{
-    models::{LogRegForm, LogRegFormField, UserLogin, UserRegistration},
+    models::{LogRegForm, UserLogin, UserRegistration},
     not_allowed, register, render,
 };
 
-type RegisterNewUser = Either<Json<UserRegistration>, Form<UserRegistration>>;
-type LoginUser = Either<Json<UserLogin>, Form<UserLogin>>;
+type RegisterNewUser = Either<Form<UserRegistration>, Json<UserRegistration>>;
+type LoginUser = Either<Form<UserLogin>, Json<UserLogin>>;
 
 async fn login_get() -> impl Responder {
-    let login_form = LogRegForm::new(
-        "Log In",
-        "/login",
-        vec![
-            LogRegFormField::new("email", "Email", "email"),
-            LogRegFormField::new("password", "Password", "password"),
-        ],
-    );
+    let login_form = LogRegForm::new("Log In", "/login");
     render("log_reg.html", Context::from_serialize(login_form).unwrap())
 }
 
 async fn login_post(login_data: LoginUser) -> impl Responder {
+    debug!("{login_data:?}");
     let login = login_data.into_inner();
     if let Err(e) = login
         .validate()
@@ -37,17 +32,7 @@ async fn login_post(login_data: LoginUser) -> impl Responder {
 }
 
 async fn register_get() -> impl Responder {
-    let login_form = LogRegForm::new(
-        "Register",
-        "/register",
-        vec![
-            LogRegFormField::new("first_name", "First Name", "first_name"),
-            LogRegFormField::new("last_name", "Last Name", "last_name"),
-            LogRegFormField::new("email", "Email", "email"),
-            LogRegFormField::new("password", "Password", "password"),
-            LogRegFormField::new("confirm_password", "Confirm Password", "confirm_password"),
-        ],
-    );
+    let login_form = LogRegForm::new("Register", "/register");
     render("log_reg.html", Context::from_serialize(login_form).unwrap())
 }
 

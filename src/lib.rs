@@ -67,6 +67,7 @@ fn create_user(new_user: NewUser) -> Result<(), ValidationError> {
     use schema::users::dsl::*;
     let conn = &mut establish_connection();
     if insert_into(users).values(new_user).execute(conn).is_err() {
+        //should not happen at this point, but just in case...
         let mut registration_error = ValidationError::new("registration_error");
         registration_error.message = Some(Cow::Borrowed("An error occured during registration"));
         return Err(registration_error);
