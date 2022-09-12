@@ -4,6 +4,7 @@ use actix_web::{
     Either, Responder,
 };
 use actix_web_lab::web::Redirect;
+//use std::borrow::Cow;
 use tera::Context;
 use uuid::Uuid;
 use validator::Validate;
@@ -34,8 +35,13 @@ async fn login_post(login_data: LoginUser, session: Session) -> impl Responder {
     session.insert("uuid", id.to_string()).unwrap();
     println!("this is the session data: {:?}", session.entries());
     good_req(200, *HTML, "User logged in successfully")
+    //Cow('static, Redirect {
+    //from: "/login",
+    //to: "/home",
+    //status_code: 300,
+    //})
     //TODO flesh out cookies / auth
-    //TODO redirect to home page
+    //WIP redirect to home page
 }
 
 async fn register_get() -> impl Responder {
@@ -53,7 +59,7 @@ async fn register_post(registration_data: RegisterNewUser) -> impl Responder {
         return bad_req(400, *JSON, e);
     }
     good_req(201, *HTML, "User successfully registered")
-    //TODO redirect to home page
+    //WIP redirect to home page
 }
 
 pub fn index(cfg: &mut web::ServiceConfig) {
