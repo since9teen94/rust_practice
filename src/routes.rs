@@ -1,26 +1,26 @@
 use actix_web::{
+    http::StatusCode,
     web::{self, Form, Json},
-    Either, Responder,
+    Either, HttpResponse, Responder,
 };
 use actix_web_lab::web::Redirect;
-use log::debug;
 use tera::Context;
 use validator::Validate;
 use web_app::{
     models::{LogRegForm, UserLogin, UserRegistration},
-    not_allowed, register, render,
+    not_allowed, not_found, register, render,
 };
 
-type RegisterNewUser = Either<Form<UserRegistration>, Json<UserRegistration>>;
-type LoginUser = Either<Form<UserLogin>, Json<UserLogin>>;
+type RegisterNewUser = Either<Json<UserRegistration>, Form<UserRegistration>>;
+type LoginUser = Either<Json<UserLogin>, Form<UserLogin>>;
 
 async fn login_get() -> impl Responder {
     let login_form = LogRegForm::new("Log In", "/login");
-    render("log_reg.html", Context::from_serialize(login_form).unwrap())
+    let context = Context::from_serialize(login_form).unwrap();
+    render("log_reg.html", context)
 }
 
 async fn login_post(login_data: LoginUser) -> impl Responder {
-    debug!("{login_data:?}");
     let login = login_data.into_inner();
     if let Err(e) = login
         .validate()
@@ -32,8 +32,9 @@ async fn login_post(login_data: LoginUser) -> impl Responder {
 }
 
 async fn register_get() -> impl Responder {
-    let login_form = LogRegForm::new("Register", "/register");
-    render("log_reg.html", Context::from_serialize(login_form).unwrap())
+    let register_form = LogRegForm::new("Register", "/register");
+    let context = Context::from_serialize(register_form).unwrap();
+    render("log_reg.html", context)
 }
 
 async fn register_post(registration_data: RegisterNewUser) -> impl Responder {
@@ -46,6 +47,10 @@ async fn register_post(registration_data: RegisterNewUser) -> impl Responder {
     };
     //TODO return as server errs
     if let Err(e) = register(registration_values) {
+        let er = HttpResponse::build(StatusCode::NOT_ACCEPTABLE)
+            .content_type("text/html; charset=utf-8")
+            .body(serde_json::to_string(&e).unwrap());
+        println!("{er:?}");
         return serde_json::to_string(&e).unwrap();
     };
     //TODO return as HttpResponses
@@ -56,18 +61,19 @@ pub fn index(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::resource("/")
             .route(web::get().to(|| async { Redirect::new("/", "/login") }))
-            .route(web::head().to(not_allowed)),
+            .route(web::to(not_allowed)),
     )
     .service(
         web::resource("/login")
             .route(web::get().to(login_get))
             .route(web::post().to(login_post))
-            .route(web::head().to(not_allowed)),
+            .route(web::to(not_allowed)),
     )
     .service(
         web::resource("/register")
             .route(web::get().to(register_get))
             .route(web::post().to(register_post))
-            .route(web::head().to(not_allowed)),
-    );
+            .route(web::to(not_allowed)),
+    )
+    .default_service(web::to(not_found));
 }

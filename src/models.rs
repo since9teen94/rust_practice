@@ -46,24 +46,24 @@ pub struct NewUser {
     skip_on_field_errors = false
 ))]
 pub struct UserLogin {
-    #[validate(length(min = 1, message = "Email required"), email)]
-    pub email: String,
-    #[validate(length(min = 1, message = "Password Required"))]
-    pub password: String,
+    #[validate(email, required)]
+    pub email: Option<String>,
+    #[validate(required)]
+    pub password: Option<String>,
 }
 
 #[derive(Deserialize, Validate, Debug)]
 pub struct UserRegistration {
-    #[validate(length(min = 1, message = "First name required"))]
-    pub first_name: String,
-    #[validate(length(min = 1, message = "Last name required"))]
-    pub last_name: String,
+    #[validate(required)]
+    pub first_name: Option<String>,
+    #[validate(required)]
+    pub last_name: Option<String>,
     #[validate(
         custom(function = "custom_registration_email_validator",),
         email,
-        length(min = 1, message = "Email required")
+        required
     )]
-    pub email: String,
+    pub email: Option<String>,
     #[validate(
         regex(
             path = "ONE_UPPER_CASE_CHAR",
@@ -82,15 +82,14 @@ pub struct UserRegistration {
             message = "Password must contain at least one special character"
         ),
         regex(path = "NO_SPACES", message = "Password must not contain spaces"),
-        must_match(other = "confirm_password", message = "Passwords must match"),
+        must_match(other = "_confirm_password", message = "Passwords must match"),
         length(min = 8, message = "Password must be at least 8 characters"),
-        length(min = 1, message = "Password required")
+        required
     )]
-    pub password: String,
+    pub _password: Option<String>,
     #[validate(
-        length(min = 1, message = "Password confirmation required"),
         length(min = 8, message = "Password must be at least 8 characters"),
-        must_match(other = "password", message = "Passwords must match"),
+        must_match(other = "_password", message = "Passwords must match"),
         regex(
             path = "ONE_UPPER_CASE_CHAR",
             message = "Password must contain at least one uppercase character"
@@ -107,9 +106,10 @@ pub struct UserRegistration {
             path = "ONE_NON_ALPHA_CHAR",
             message = "Password must contain at least one special character"
         ),
-        regex(path = "NO_SPACES", message = "Password must not contain spaces")
+        regex(path = "NO_SPACES", message = "Password must not contain spaces"),
+        required
     )]
-    pub confirm_password: String,
+    pub _confirm_password: Option<String>,
 }
 
 fn custom_registration_email_validator(value: &str) -> Result<(), ValidationError> {
@@ -118,6 +118,8 @@ fn custom_registration_email_validator(value: &str) -> Result<(), ValidationErro
 
 fn custom_login_validator(user_login: &UserLogin) -> Result<(), ValidationError> {
     let UserLogin { email, password } = user_login;
+    let email = email.as_ref().unwrap();
+    let password = password.as_ref().unwrap();
     if email_count(email, 1).is_err() || custom_login_password_validator(password, email).is_err() {
         return Err(ValidationError::new("invalid"));
     };
@@ -172,42 +174,29 @@ pub struct LogRegForm {
 
 impl LogRegForm {
     pub fn new(title: &str, action: &str) -> LogRegForm {
-        let login_fields = vec![
-            //LogRegFormField::new("first_name", "First Name", "first_name"),
-            //LogRegFormField::new("last_name", "Last Name", "last_name"),
+        let mut form_fields = vec![
             LogRegFormField::new("email", "Email", "email"),
             LogRegFormField::new("password", "Password", "password"),
-            //LogRegFormField::new("confirm_password", "Confirm Password", "confirm_password"),
         ];
-        let register_fields = &login_fields; //.push(LogRegFormField::new( "first_name", "First Name", "first_name",));
-        register_fields.push(LogRegFormField::new(
-            "first_name",
-            "First Name",
-            "first_name",
-        ));
-        //vec![
-        //LogRegFormField::new("first_name", "First Name", "first_name"),
-        //LogRegFormField::new("last_name", "Last Name", "last_name"),
-        //LogRegFormField::new("email", "Email", "email"),
-        //LogRegFormField::new("password", "Password", "password"),
-        //LogRegFormField::new("confirm_password", "Confirm Password", "confirm_password"),
-        //]
-        let fields = match title {
-            "Log In" => login_fields,
-            "Register" => vec![
+        if title == "Register" {
+            form_fields.insert(
+                0,
                 LogRegFormField::new("first_name", "First Name", "first_name"),
+            );
+            form_fields.insert(
+                1,
                 LogRegFormField::new("last_name", "Last Name", "last_name"),
-                LogRegFormField::new("email", "Email", "email"),
-                LogRegFormField::new("password", "Password", "password"),
-                LogRegFormField::new("confirm_password", "Confirm Password", "confirm_password"),
-            ],
-            _ => vec![],
-        };
-
+            );
+            form_fields.push(LogRegFormField::new(
+                "confirm_password",
+                "Confirm Password",
+                "confirm_password",
+            ));
+        }
         LogRegForm {
             title: String::from(title),
             action: String::from(action),
-            fields,
+            fields: form_fields,
         }
     }
 }
