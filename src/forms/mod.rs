@@ -25,7 +25,7 @@ impl LogRegForm {
             form_fields.push(LogRegFormField::new(
                 "confirm_password",
                 "Confirm Password",
-                "confirm_password",
+                "password",
             ));
         }
         LogRegForm {

@@ -1,17 +1,16 @@
 pub mod forms;
 pub mod models;
+pub mod schema;
+use actix_web::{http::StatusCode, HttpResponse, Responder};
 use argon2::{
     password_hash::{rand_core::OsRng, PasswordHasher, SaltString},
     Argon2,
 };
-use serde::Serialize;
-use std::borrow::Cow;
-pub mod schema;
-use actix_web::{http::StatusCode, HttpResponse, Responder};
 use diesel::{insert_into, pg::PgConnection, prelude::*};
 use dotenvy::dotenv;
 use lazy_static::lazy_static;
 use models::{NewUser, UserRegistration};
+use std::borrow::Cow;
 use std::env;
 use tera::{Context, Tera};
 use validator::ValidationError;
@@ -42,7 +41,7 @@ pub fn render(file: &str, context: Context) -> HttpResponse {
     HttpResponse::Ok().body(template)
 }
 
-pub fn register(user: UserRegistration) -> Result<(), ValidationError> {
+pub async fn register(user: UserRegistration) -> Result<(), ValidationError> {
     let UserRegistration {
         first_name,
         last_name,
@@ -50,17 +49,17 @@ pub fn register(user: UserRegistration) -> Result<(), ValidationError> {
         _password,
         _confirm_password,
     } = user;
-    let hashed_password = password_hasher(&_password.unwrap()).unwrap();
+    let hashed_password = password_hasher(&_password.unwrap()).await;
     let new_user = NewUser {
         first_name: first_name.unwrap(),
         last_name: last_name.unwrap(),
         email: email.unwrap(),
-        password: hashed_password,
+        password: hashed_password.unwrap(),
     };
-    create_user(new_user)
+    create_user(new_user).await
 }
 
-fn password_hasher(password_str: &str) -> Result<String, argon2::password_hash::Error> {
+async fn password_hasher(password_str: &str) -> Result<String, argon2::password_hash::Error> {
     let password = password_str.as_bytes();
     let salt = SaltString::generate(&mut OsRng);
     let argon2 = Argon2::default();
@@ -68,7 +67,7 @@ fn password_hasher(password_str: &str) -> Result<String, argon2::password_hash::
     Ok(password_hash)
 }
 
-fn create_user(new_user: NewUser) -> Result<(), ValidationError> {
+async fn create_user(new_user: NewUser) -> Result<(), ValidationError> {
     use schema::users::dsl::*;
     let conn = &mut establish_connection();
     if insert_into(users).values(new_user).execute(conn).is_err() {
@@ -79,18 +78,21 @@ fn create_user(new_user: NewUser) -> Result<(), ValidationError> {
     Ok(())
 }
 
-pub fn bad_req<T: Serialize>(code: u16, content_type: &'static str, error: T) -> HttpResponse {
+pub fn response(
+    http_status_code: u16,
+    content_type: &'static str,
+    body: Option<String>,
+) -> HttpResponse {
+    if body.is_none() {
+        let content_type = format!("{content_type}; charset=utf-8");
+        return HttpResponse::build(StatusCode::from_u16(http_status_code).unwrap())
+            .content_type(content_type)
+            .finish();
+    };
     let content_type = format!("{content_type}; charset=utf-8");
-    HttpResponse::build(StatusCode::from_u16(code).unwrap())
+    HttpResponse::build(StatusCode::from_u16(http_status_code).unwrap())
         .content_type(content_type)
-        .body(serde_json::to_string(&error).unwrap())
-}
-
-pub fn good_req(code: u16, content_type: &'static str, message: &'static str) -> HttpResponse {
-    let content_type = format!("{content_type}; charset=utf-8");
-    HttpResponse::build(StatusCode::from_u16(code).unwrap())
-        .content_type(content_type)
-        .body(message)
+        .body(body.unwrap())
 }
 
 pub async fn not_allowed() -> impl Responder {
