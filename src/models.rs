@@ -128,7 +128,7 @@ fn custom_login_validator(user_login: &UserLogin) -> Result<(), ValidationError>
 }
 
 fn custom_login_password_validator(value: &str, arg: &str) -> Result<(), ValidationError> {
-    use super::schema::users::dsl::*;
+    use crate::schema::users::dsl::*;
     let mut conn = establish_connection();
     let db_password = users
         .select(password)
@@ -164,4 +164,16 @@ fn password_hash_checker(
 ) -> Result<(), argon2::password_hash::Error> {
     let parsed_hash = PasswordHash::new(password_hash)?;
     Argon2::default().verify_password(password.as_bytes(), &parsed_hash)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[actix_web::test]
+    async fn test_password_hash_checker_function() {
+        let password = "Password1!";
+        let password_hash = "$argon2id$v=19$m=4096,t=3,p=1$A2uYmfHJZkAQ55CCvpTujA$aBoQLUaRrqIQl33JcKRqy+x7a/WQBpNEsuJJjCUylyk";
+        assert_eq!(password_hash_checker(password, password_hash).unwrap(), ());
+    }
 }

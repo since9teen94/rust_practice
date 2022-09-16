@@ -1,5 +1,6 @@
 pub mod forms;
 pub mod models;
+pub mod routes;
 pub mod schema;
 use actix_web::{http::StatusCode, HttpResponse, Responder};
 use argon2::{

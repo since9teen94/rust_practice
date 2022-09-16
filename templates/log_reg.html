@@ -1,17 +1,25 @@
 {% extends "index.html" %} {% block title %} {{ title }} {% endblock title %} {%
 block body %}
-<form action="{{ action }}" method="post">
+<form
+  class="d-flex align-center row justify-content-center col-sm-6 offset-3"
+  action="{{ action }}"
+  method="post"
+>
+  <h2>{{title}}</h2>
   {% for field in fields %}
-  <label for="{{ field.id }}">{{ field.text }}</label>
-  <input
-    type="{{ field.field_type }}"
-    id="{{ field.id }}"
-    name="{{ field.id }}"
-  />
+  <div class="mb-3">
+    <label class="form-label" for="{{ field.id }}">{{ field.text }}</label>
+    <input
+      type="{{ field.field_type }}"
+      id="{{ field.id }}"
+      name="{{ field.id }}"
+      placeholder="{{field.placeholder}}"
+      class="form-control"
+    />
+  </div>
   {% endfor %}
-  <input type="submit" value="{{ title }}" />
-</form>
-<form action="/logout" method="post">
-  <input type="submit" value="Logout" />
+  <div class="mb-3">
+    <button class="mb-3 btn btn-primary w-100" type="submit">{{title}}</button>
+  </div>
 </form>
 {% endblock body %}

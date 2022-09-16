@@ -33,6 +33,7 @@ impl LogRegForm {
             action: String::from(action),
             fields: form_fields,
         }
+        //TODO form fields -> placeholder text
     }
 }
 

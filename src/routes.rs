@@ -1,3 +1,9 @@
+pub mod home;
+use super::{
+    forms::LogRegForm,
+    models::{UserLogin, UserRegistration},
+    not_allowed, register, render, response, /* HTML,*/ JSON,
+};
 use actix_identity::Identity;
 use actix_web::{
     http::{self, header, header::HeaderValue, StatusCode},
@@ -5,16 +11,11 @@ use actix_web::{
     Either, HttpMessage, HttpRequest, HttpResponse, Responder,
 };
 use actix_web_lab::web::Redirect;
-//use log::debug;
 use serde_json::json;
 use tera::Context;
 use uuid::Uuid;
 use validator::Validate;
-use web_app::{
-    forms::LogRegForm,
-    models::{UserLogin, UserRegistration},
-    not_allowed, register, render, response, /* HTML,*/ JSON,
-};
+//};
 //TODO more tests?
 //TODO homepage frontend
 
@@ -158,7 +159,7 @@ pub fn index(cfg: &mut web::ServiceConfig) {
 }
 
 #[cfg(test)]
-mod tests {
+mod index {
     use super::*;
     use actix_identity::IdentityMiddleware;
     use actix_session::{storage::CookieSessionStore, SessionMiddleware};
@@ -263,7 +264,6 @@ mod tests {
             .set_json(data)
             .to_request();
         let response = test::call_service(&app, request).await;
-        //assert_eq!(response.status(), 200);
         assert_eq!(response.status(), 303);
     }
 

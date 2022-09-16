@@ -4,8 +4,7 @@ use actix_web::{cookie::Key, middleware::Logger, web, App, HttpServer};
 use dotenvy::dotenv;
 use std::env;
 use web_app::not_found;
-mod routes;
-use routes::index;
+use web_app::{routes::home, routes::index};
 
 ///Be sure to set DATABASE_URL, PORT, and RUST_LOG .env variables to run the binary
 
@@ -29,6 +28,7 @@ async fn main() -> std::io::Result<()> {
                     .build(),
             )
             .configure(index)
+            .configure(home::index)
             .default_service(web::to(not_found))
     })
     .bind(("127.0.0.1", port))?
