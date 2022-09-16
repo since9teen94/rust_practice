@@ -7,49 +7,66 @@ pub struct LogRegForm {
     fields: Vec<LogRegFormField>,
 }
 
+#[derive(Serialize)]
+struct LogRegFormField {
+    id: String,
+    text: String,
+    field_type: String,
+    placeholder: String,
+}
+
+impl LogRegFormField {
+    pub fn new(id: &str, text: &str, field_type: &str, placeholder: &str) -> LogRegFormField {
+        LogRegFormField {
+            id: String::from(id),
+            text: String::from(text),
+            field_type: String::from(field_type),
+            placeholder: String::from(placeholder),
+        }
+    }
+}
+
 impl LogRegForm {
     pub fn new(title: &str, action: &str) -> LogRegForm {
         let mut form_fields = vec![
-            LogRegFormField::new("email", "Email", "email"),
-            LogRegFormField::new("password", "Password", "password"),
+            LogRegFormField::new("email", "Email", "email", "Please enter a valid email."),
+            LogRegFormField::new(
+                "password",
+                "Password",
+                "password",
+                "Please enter a valid password.",
+            ),
         ];
         if title == "Register" {
             form_fields.insert(
                 0,
-                LogRegFormField::new("first_name", "First Name", "first_name"),
+                LogRegFormField::new(
+                    "first_name",
+                    "First Name",
+                    "first_name",
+                    "Please enter your first name.",
+                ),
             );
             form_fields.insert(
                 1,
-                LogRegFormField::new("last_name", "Last Name", "last_name"),
+                LogRegFormField::new(
+                    "last_name",
+                    "Last Name",
+                    "last_name",
+                    "Please enter your last name.",
+                ),
             );
             form_fields.push(LogRegFormField::new(
                 "confirm_password",
                 "Confirm Password",
                 "password",
+                "Please confirm your password.",
             ));
         }
         LogRegForm {
             title: String::from(title),
             action: String::from(action),
             fields: form_fields,
-        }
-        //TODO form fields -> placeholder text
-    }
-}
-
-#[derive(Serialize)]
-struct LogRegFormField {
-    id: String,
-    text: String,
-    field_type: String,
-}
-
-impl LogRegFormField {
-    pub fn new(id: &str, text: &str, field_type: &str) -> LogRegFormField {
-        LogRegFormField {
-            id: String::from(id),
-            text: String::from(text),
-            field_type: String::from(field_type),
         }
     }
 }
