@@ -1,0 +1,10 @@
+{% extends 'index.html' %} {% block title %}{{title}}{% endblock %} {% block
+body %}
+<div class="d-flex justify-content-around mt-4">
+  <div></div>
+  {% for link in links %}
+  <a href="{{link.url}}" class="mx-2">{{link.text}}</a>
+  {% endfor %}
+  <div></div>
+</div>
+{% endblock %}

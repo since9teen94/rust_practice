@@ -1,0 +1,10 @@
+{% extends 'index.html' %} {% block title %}{{title}}{% endblock %} {% block
+body %}
+<div class="container w-50 mt-4 d-flex flex-column align-items-center">
+  <div id="quote-container">
+    <p id="text" class="text-center"></p>
+    <p id="author" class="text-center"></p>
+  </div>
+  <button id="new-quote" class="btn btn-dark">New Quote</button>
+</div>
+{% endblock %}

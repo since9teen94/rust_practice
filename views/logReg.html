@@ -1,0 +1,51 @@
+{% macro formFloating(field="", text="", type="text") %}
+<div class="form-floating mb-3 w-100">
+  <input type="{{type}}" class="form-control" name="{{field}}" id="{{field}}" />
+  <label for="{{field}}">{{text}}</label>
+  <p id="{{field}}-error" class="error"></p>
+</div>
+{% endmacro %} {% extends 'index.html' %} {% block title %}{{title}}{% endblock
+%}{% block body %}
+<div class="row d-flex align-items-center">
+  <div
+    class="d-none d-sm-flex col-sm-4 align-items-center justify-content-center"
+    style="
+      color: white;
+      background-image: linear-gradient(
+          rgba(165, 226, 240, 0.25),
+          rgba(165, 226, 240, 0.85)
+        ),
+        url('../static/images/imgOne.jpg');
+      background-position: center;
+      background-repeat: no-repeat;
+      background-size: cover;
+      height: 100vh;
+      opacity: 0.7;
+    "
+  >
+    <img src="../static/svg/books.svg" alt="Books svg" style="width: 90%" />
+  </div>
+  <form
+    style="height: 100vh"
+    class="col-xs-12 col-sm-8 form-signin d-flex flex-column align-items-start justify-content-center px-5"
+    id="logRegForm"
+    data-type="{{title}}"
+    novalidate
+  >
+    <h1 class="h3 mb-3 fw-normal">{{title}}</h1>
+    {% if title=='Register' %} {{formFloating('firstName', 'First Name')}}
+    {{formFloating('lastName', 'Last Name')}} {% endif %}
+    {{formFloating('email', 'Email', 'email')}} {{formFloating('password',
+    'Password', 'password')}} {% if title=='Register' %}
+    {{formFloating('confirmPassword', 'Confirm Password', 'password')}} {% endif
+    %}
+    <button class="w-100 btn btn-lg btn-primary" type="submit">
+      {{title}}
+    </button>
+    <div class="w-100 mt-4 d-flex justify-content-between">
+      <a href="/home">Back</a>
+      <p>© {{year}} since9teen94</p>
+    </div>
+  </form>
+</div>
+{% endblock %}

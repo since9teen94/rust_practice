@@ -30,7 +30,8 @@ async fn main() -> std::io::Result<()> {
             )
             .configure(index)
             .configure(home::index)
-            .service(fs::Files::new("/static", "./static").show_files_listing())
+            .service(fs::Files::new("/static", "./static"))
+            .service(fs::Files::new("/views", "./views"))
             .default_service(web::to(not_found))
     })
     .bind(("127.0.0.1", port))?

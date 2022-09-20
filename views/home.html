@@ -1,0 +1,8 @@
+{% import 'featurette.html' as f %} {% extends 'index.html' %} {% block title
+%}{{title}}{% endblock %} {% block body %}
+<div id="featurettes-div">
+  {% for feature in features %} {{f.feature(feature.ftitle,
+  feature.contributions, feature.takeaways, feature.url, feature.index)}} {%
+  endfor %}
+  {% endblock %}
+</div>

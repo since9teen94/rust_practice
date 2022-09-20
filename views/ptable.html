@@ -1,0 +1,61 @@
+{% macro invis() %}
+<li class="page-item invisible"><a class="page-link" href="#">0</a></li>
+{% endmacro %} {% macro page(pageNum, active='') %}
+<li class="page-item">
+  <a
+    class="page-link {{pageNum}} {{active}}"
+    href="/home/ptable?curPage={{pageNum}}"
+    >{{pageNum}}</a
+  >
+</li>
+{% endmacro %} {% macro pagination(curPage, lastPage) %} {% if curPage > 1 %}
+<li class="page-item">
+  <a class="page-link prev" href="/home/ptable?curPage={{curPage-1}}">Prev</a>
+</li>
+{% else %}
+<li class="page-item">
+  <a class="page-link prev disabled" href="#">Prev</a>
+</li>
+{% endif %} {% if curPage-2 >= 1 %} {{page(curPage-2)}} {% else %} {{invis()}}
+{% endif %} {% if curPage-1 >= 1 %} {{page(curPage-1)}} {% else %} {{invis()}}
+{% endif %} {{page(curPage, 'active')}} {% if curPage+1 <= lastPage %}
+{{page(curPage+1)}} {% else %} {{invis()}} {% endif %} {% if curPage+2 <=
+lastPage %} {{page(curPage+2)}} {% else %} {{invis()}} {% endif %} {% if curPage
+< lastPage %}
+<li class="page-item">
+  <a class="page-link next" href="/home/ptable?curPage={{curPage+1}}">Next</a>
+</li>
+{% else %}
+<li class="page-item">
+  <a class="page-link next disabled" href="#">Next</a>
+</li>
+{% endif %} {% endmacro %} {% extends 'index.html' %} {% block title
+%}{{title}}{% endblock %} {% block body %}
+<div class="container mt-4" id="ptable-container">
+  <table id="table" class="table table-striped">
+    <thead class="thead-dark">
+      <tr>
+        {% for title in ['Name', 'Atomic Number','Symbol', 'Atomic Mass']%}
+        <th scope="col">{{title}}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody></tbody>
+    {% for element in elements %}
+    <tr>
+      <td>{{element.name}}</td>
+      <td>{{element.atomicNumber}}</td>
+      <td>{{element.symbol}}</td>
+      <td>{{element.atomicMass}}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  <nav class="d-flex justify-content-center">
+    <ul class="pagination text-center">
+      {{pagination(curPage, lastPage)}}
+    </ul>
+  </nav>
+</div>
+<div class="hidden" id="curPage" data-page="{{curPage}}"></div>
+<div class="hidden" id="lastPage" data-page="{{lastPage}}"></div>
+{% endblock %}
