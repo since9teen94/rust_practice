@@ -1,10 +1,13 @@
+use chrono::Datelike;
 use serde::Serialize;
 
 #[derive(Serialize)]
 pub struct LogRegForm {
     title: String,
     action: String,
+    method: String,
     fields: Vec<LogRegFormField>,
+    year: i32,
 }
 
 #[derive(Serialize)]
@@ -27,7 +30,7 @@ impl LogRegFormField {
 }
 
 impl LogRegForm {
-    pub fn new(title: &str, action: &str) -> LogRegForm {
+    pub fn new(title: &str, action: &str, method: &str) -> LogRegForm {
         let mut form_fields = vec![
             LogRegFormField::new("email", "Email", "email", "Please enter a valid email."),
             LogRegFormField::new(
@@ -62,10 +65,14 @@ impl LogRegForm {
                 "password",
                 "Please confirm your password.",
             ));
-        }
+        };
+        let year = chrono::Utc::now().year();
+
         LogRegForm {
             title: String::from(title),
             action: String::from(action),
+            method: String::from(method),
+            year,
             fields: form_fields,
         }
     }

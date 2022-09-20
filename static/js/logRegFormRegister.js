@@ -8,11 +8,11 @@ document.getElementById("logRegForm").addEventListener("submit", async (e) => {
     "confirm_password",
   ];
   const feedbackListener = () => {
-    errors.forEach((id) => {
-      document.getElementById(`${id}`).classList.remove("is-invalid");
+    errors.forEach((field) => {
+      document.getElementById(`${field}`).classList.remove("is-invalid");
       document.getElementById(`validation_${field}`).innerText = "";
       document
-        .getElementById(`${id}`)
+        .getElementById(`${field}`)
         .removeEventListener("click", feedbackListener);
     });
   };

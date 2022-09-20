@@ -21,9 +21,9 @@ type RegisterNewUser = Either<Json<UserRegistration>, Form<UserRegistration>>;
 type LoginUser = Either<Json<UserLogin>, Form<UserLogin>>;
 
 async fn login_get() -> impl Responder {
-    let login_form = LogRegForm::new("Log In", "/login");
+    let login_form = LogRegForm::new("Log In", "/login", "POST");
     let context = Context::from_serialize(login_form).unwrap();
-    render("log_reg.html", context)
+    render("logReg.html", context)
 }
 
 async fn login_post(
@@ -57,9 +57,9 @@ async fn login_post(
 }
 
 async fn register_get() -> impl Responder {
-    let register_form = LogRegForm::new("Register", "/register");
+    let register_form = LogRegForm::new("Register", "/register", "POST");
     let context = Context::from_serialize(register_form).unwrap();
-    render("log_reg.html", context)
+    render("logReg.html", context)
 }
 
 async fn register_post(
