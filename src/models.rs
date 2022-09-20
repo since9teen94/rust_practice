@@ -42,25 +42,26 @@ pub struct NewUser {
 #[validate(schema(
     function = "custom_login_validator",
     message = "Invalid Credentials",
-    skip_on_field_errors = false
+    skip_on_field_errors = true
 ))]
 pub struct UserLogin {
-    #[validate(email, required)]
+    #[validate(email, required, length(min = 1, message = "Required"))]
     pub email: Option<String>,
-    #[validate(required)]
+    #[validate(required, length(min = 1, message = "Required"))]
     pub password: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Validate, Debug)]
 pub struct UserRegistration {
-    #[validate(required)]
+    #[validate(required, length(min = 1, message = "Required"))]
     pub first_name: Option<String>,
-    #[validate(required)]
+    #[validate(required, length(min = 1, message = "Required"))]
     pub last_name: Option<String>,
     #[validate(
         custom(function = "custom_registration_email_validator",),
         email,
-        required
+        required,
+        length(min = 1, message = "Required")
     )]
     pub email: Option<String>,
     #[validate(
@@ -83,7 +84,8 @@ pub struct UserRegistration {
         regex(path = "NO_SPACES", message = "Password must not contain spaces"),
         must_match(other = "_confirm_password", message = "Passwords must match"),
         length(min = 8, message = "Password must be at least 8 characters"),
-        required
+        required,
+        length(min = 1, message = "Required")
     )]
     #[serde(rename = "password")]
     pub _password: Option<String>,
@@ -107,7 +109,8 @@ pub struct UserRegistration {
             message = "Password must contain at least one special character"
         ),
         regex(path = "NO_SPACES", message = "Password must not contain spaces"),
-        required
+        required,
+        length(min = 1, message = "Required")
     )]
     #[serde(rename = "confirm_password")]
     pub _confirm_password: Option<String>,

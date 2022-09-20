@@ -1,9 +1,6 @@
-//TODO start fleshing out some routes...
-//use web_app::{
 use crate::forms::LogRegForm;
 use crate::models::{UserLogin, UserRegistration};
 use crate::{not_allowed, register, render, response, /* HTML,*/ JSON};
-//};
 use actix_identity::Identity;
 use actix_web::{
     http::{self, header, header::HeaderValue, StatusCode},
@@ -15,8 +12,7 @@ use serde_json::json;
 use tera::Context;
 use uuid::Uuid;
 use validator::Validate;
-//TODO more tests?
-//TODO homepage frontend
+//TODO homepage frontend, routes
 
 type RegisterNewUser = Either<Json<UserRegistration>, Form<UserRegistration>>;
 type LoginUser = Either<Json<UserLogin>, Form<UserLogin>>;

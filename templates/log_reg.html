@@ -1,25 +1,35 @@
-{% extends "index.html" %} {% block title %} {{ title }} {% endblock title %} {%
+{% extends "index.html" %}{% block title %}{{ title }}{% endblock title %}{%
 block body %}
 <form
-  class="d-flex align-center row justify-content-center col-sm-6 offset-3"
+  id="logRegForm"
+  class="mt-5 row d-flex align-items-center col-6 offset-3"
   action="{{ action }}"
   method="post"
 >
-  <h2>{{title}}</h2>
+  <h2>{{ title }}</h2>
   {% for field in fields %}
-  <div class="mb-3">
-    <label class="form-label" for="{{ field.id }}">{{ field.text }}</label>
+  <div class="form-floating mb-3">
     <input
       type="{{ field.field_type }}"
       id="{{ field.id }}"
       name="{{ field.id }}"
-      placeholder="{{field.placeholder}}"
+      placeholder="{{ field.placeholder }}"
       class="form-control"
+      aria-described-by="validation_{{ field.id }}"
     />
+    <label class="form-label" for="{{ field.id }}">{{ field.text }}</label>
+    <div class="invalid-feedback" id="validation_{{ field.id }}"></div>
   </div>
   {% endfor %}
   <div class="mb-3">
-    <button class="mb-3 btn btn-primary w-100" type="submit">{{title}}</button>
+    <button id="logRegSubmit" class="mb-3 btn btn-primary w-100" type="submit">
+      {{ title }}
+    </button>
   </div>
 </form>
-{% endblock body %}
+{# these scripts are fairly similar, see if you can reduce the code...#}
+{% if title == 'Log In' %}
+<script src="static/js/logRegFormLogin.js"></script>
+{% elif title == 'Register' %}
+<script src="static/js/logRegFormRegister.js"></script>
+{% endif %} {% endblock body %}

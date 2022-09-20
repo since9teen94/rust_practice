@@ -1,3 +1,4 @@
+use actix_files as fs;
 use actix_identity::IdentityMiddleware;
 use actix_session::{storage::CookieSessionStore, SessionMiddleware};
 use actix_web::{cookie::Key, middleware::Logger, web, App, HttpServer};
@@ -29,6 +30,7 @@ async fn main() -> std::io::Result<()> {
             )
             .configure(index)
             .configure(home::index)
+            .service(fs::Files::new("/static", "./static").show_files_listing())
             .default_service(web::to(not_found))
     })
     .bind(("127.0.0.1", port))?

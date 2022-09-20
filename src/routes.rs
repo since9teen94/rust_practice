@@ -15,9 +15,7 @@ use serde_json::json;
 use tera::Context;
 use uuid::Uuid;
 use validator::Validate;
-//};
-//TODO more tests?
-//TODO homepage frontend
+//TODO homepage frontend, Routes
 
 type RegisterNewUser = Either<Json<UserRegistration>, Form<UserRegistration>>;
 type LoginUser = Either<Json<UserLogin>, Form<UserLogin>>;
