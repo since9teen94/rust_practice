@@ -8,6 +8,7 @@ pub struct LogRegForm {
     method: String,
     fields: Vec<LogRegFormField>,
     year: i32,
+    home: String,
 }
 
 #[derive(Serialize)]
@@ -74,6 +75,8 @@ impl LogRegForm {
             method: String::from(method),
             year,
             fields: form_fields,
+            //TODO create Login / Register redirect...
+            home: String::from("/home"),
         }
     }
 }

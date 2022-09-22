@@ -2,26 +2,13 @@
 block body %}
 <div class="row d-flex align-items-center">
   <div
-    class="d-none d-sm-flex col-sm-4 align-items-center justify-content-center"
-    style="
-      color: white;
-      background-image: linear-gradient(
-          rgba(165, 226, 240, 0.25),
-          rgba(165, 226, 240, 0.85)
-        ),
-        url('../static/images/imgOne.jpg');
-      background-position: center;
-      background-repeat: no-repeat;
-      background-size: cover;
-      height: 100vh;
-      opacity: 0.7;
-    "
+    class="booksDiv d-none d-sm-flex col-sm-4 align-items-center justify-content-center"
   >
-    <img src="../static/svg/books.svg" alt="Books svg" style="width: 90%" />
+    <!-- add url for this -->
+    <img class="booksSvg" src="../static/svg/books.svg" alt="Books svg" />
   </div>
   <form
-    style="height: 100vh"
-    class="col-xs-12 col-sm-8 form-signin d-flex flex-column align-items-start justify-content-center px-5"
+    class="100vh col-xs-12 col-sm-8 form-signin d-flex flex-column align-items-start justify-content-center px-5"
     id="logRegForm"
     action="{{ action }}"
     method="{{ method }}"
@@ -49,13 +36,13 @@ block body %}
       {{ title }}
     </button>
     <div class="w-100 mt-4 d-flex justify-content-between">
-      <a href="/home">Back</a>
+      <a href="{{ home }}">Back</a>
       <p>© {{ year }} since9teen94</p>
     </div>
   </form>
 </div>
-{# these scripts are fairly similar, see if you can reduce the code...#} {% if
-title == 'Log In' %}
+{# TODO these scripts are fairly similar, see if you can reduce the code...#} {%
+if title == 'Log In' %}
 <script src="static/js/logRegFormLogin.js"></script>
 {% elif title == 'Register' %}
 <script src="static/js/logRegFormRegister.js"></script>
