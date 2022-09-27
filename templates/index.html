@@ -27,7 +27,7 @@
     <title>{% block title%}{% endblock title %}</title>
   </head>
   <body>
-    {% if title!='Register' and title!='Log In' %} {% include
+    {% if title != 'Register' and title != 'Log In' %} {% include
     '../components/navbar.html' %} {% endif %} {% block body %}{% endblock body
     %} {% if title!='Register' and title!='Log In' %} {% include
     '../components/footer.html' %} {% endif %}

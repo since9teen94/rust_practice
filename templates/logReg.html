@@ -1,49 +1,41 @@
-{% extends "index.html" %} {% block title %}{{ title }}{% endblock title %}{%
-block body %}
-<div class="row d-flex align-items-center">
-  <div
-    class="booksDiv d-none d-sm-flex col-sm-4 align-items-center justify-content-center"
-  >
-    <!-- add url for this -->
-    <img class="booksSvg" src="../static/svg/books.svg" alt="Books svg" />
-  </div>
-  <form
-    class="100vh col-xs-12 col-sm-8 form-signin d-flex flex-column align-items-start justify-content-center px-5"
-    id="logRegForm"
-    action="{{ action }}"
-    method="{{ method }}"
-  >
-    <h1 class="h3 mb-3 fw-normal">{{ title }}</h1>
-    {% for field in fields %}
-    <div class="form-floating mb-3 w-100">
-      <input
-        type="{{ field.field_type }}"
-        id="{{ field.id }}"
-        name="{{ field.id }}"
-        placeholder="{{ field.placeholder }}"
-        class="form-control"
-        aria-described-by="validation_{{ field.id }}"
-      />
-      <label class="form-label" for="{{ field.id }}">{{ field.text }}</label>
-      <div class="invalid-feedback" id="validation_{{ field.id }}"></div>
+{% extends "index.html" %}
+{% block title %}
+    {{ title }}
+{% endblock title %}
+{% block body %}
+    <div class="row d-flex align-items-center">
+        <div class="booksDiv d-none d-sm-flex col-sm-4 align-items-center justify-content-center">
+            <!-- add url for this -->
+            <img class="booksSvg" src="../static/svg/books.svg" alt="Books svg" />
+        </div>
+        <form class="fullheight col-xs-12 col-sm-8 form-signin d-flex flex-column align-items-start justify-content-center px-5"
+              id="logRegForm"
+              action="{{ action }}"
+              method="{{ method }}">
+            <h1 class="h3 mb-3 fw-normal">{{ title }}</h1>
+            {% for field in fields %}
+                <div class="form-floating mb-3 w-100">
+                    <input type="{{ field.field_type }}"
+                           id="{{ field.id }}"
+                           name="{{ field.id }}"
+                           placeholder="{{ field.placeholder }}"
+                           class="form-control"
+                           aria-described-by="validation_{{ field.id }}"/>
+                    <label class="form-label" for="{{ field.id }}">{{ field.text }}</label>
+                    <div class="invalid-feedback" id="validation_{{ field.id }}"></div>
+                </div>
+            {% endfor %}
+            <button id="logRegSubmit" class="w-100 btn btn-lg btn-primary" type="submit">{{ title }}</button>
+            <div class="w-100 mt-4 d-flex justify-content-between">
+                <a href="{{ home }}">Back</a>
+                <p>© {{ year }} since9teen94</p>
+            </div>
+        </form>
     </div>
-    {% endfor %}
-    <button
-      id="logRegSubmit"
-      class="w-100 btn btn-lg btn-primary"
-      type="submit"
-    >
-      {{ title }}
-    </button>
-    <div class="w-100 mt-4 d-flex justify-content-between">
-      <a href="{{ home }}">Back</a>
-      <p>© {{ year }} since9teen94</p>
-    </div>
-  </form>
-</div>
-{# TODO these scripts are fairly similar, see if you can reduce the code...#} {%
-if title == 'Log In' %}
-<script src="static/js/logRegFormLogin.js"></script>
-{% elif title == 'Register' %}
-<script src="static/js/logRegFormRegister.js"></script>
-{% endif %} {% endblock body %}
+    {# TODO these scripts are fairly similar, see if you can reduce the code...#}
+    {% if title == 'Log In' %}
+        <script src="static/js/logRegFormLogin.js"></script>
+    {% elif title == 'Register' %}
+        <script src="static/js/logRegFormRegister.js"></script>
+    {% endif %}
+{% endblock body %}
